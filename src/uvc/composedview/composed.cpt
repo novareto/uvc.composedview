@@ -1,0 +1,26 @@
+<div class="row-fluid" tal:define="summary list(view.summary())">
+  <h1 tal:content="view.title" />
+  <div class="tabbable" tal:condition="summary">
+    <ul class="nav nav-tabs">
+      <li tal:repeat="entry summary"
+	  tal:attributes="class repeat['entry'].start and 'active' or ''">
+	<a data-toggle="tab"
+	   tal:attributes="href '#%s' % entry['name'];"
+	   tal:content="entry['title']" />
+      </li>
+    </ul>
+    <div class="tab-content">
+      <tal:panes repeat="tab view.tabs.items()">
+	<div tal:attributes="id tab[0];
+	     class repeat['tab'].start and 'tab-pane active' or 'tab-pane'">
+	  <p class="pull-right">
+	    <a tal:attributes="href view.tab_url(tab[0])">
+	      <i class="icon-share"></i>
+	    </a>
+	  </p>
+	  <div tal:content="structure getattr(tab[1], 'content', tab[1].render)()" />
+	</div>
+      </tal:panes>
+    </div>
+  </div>
+</div>
