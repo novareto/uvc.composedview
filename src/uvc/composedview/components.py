@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import zope.security
+
 from collections import OrderedDict
 from operator import itemgetter
 
@@ -11,6 +13,13 @@ from zope.component import getAdapters
 from zope.interface import implementer, Interface
 from zope.publisher.interfaces.browser import IBrowserPage
 from zope.schema import Dict, TextLine
+
+
+def check_security(component, attribute):
+    try:
+        return zope.security.canAccess(component, attribute)
+    except zope.security.interfaces.Forbidden:
+        return False
 
 
 class ITab(IBrowserPage):
@@ -51,9 +60,13 @@ def get_tabs(view, update=True):
         getAdapters((view, view.request), Interface), key=itemgetter(1))
     for id, tab in views:
         if ITab.providedBy(tab):
-            if update is True:
-                tab.update()
-            tabs[id] = tab
+            # This security check is crap
+            # It's due to Grok protecting only __call__
+            # This works as long as we don't have a security proxy.
+            if check_security(tab, '__call__'):
+                if update is True:
+                    tab.update()
+                tabs[id] = tab
     return tabs
 
 
