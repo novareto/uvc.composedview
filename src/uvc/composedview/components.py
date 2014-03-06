@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import os
 import zope.security
 
 from collections import OrderedDict
-from operator import itemgetter
-
+from cromlech.browser import IView, IRenderable
 from dolmen.field import GlobalClass
-from grokcore.chameleon.components import ChameleonPageTemplateFile
+from dolmen.template import TALTemplate
 from grokcore.component import baseclass, title, sort_components
-from megrok.layout import Page
+from operator import itemgetter
+from uvclight import Page
 from zope.component import getAdapters
 from zope.interface import implementer, Interface
-from zope.publisher.interfaces.browser import IBrowserPage
 from zope.schema import Dict, TextLine
 
 
@@ -22,11 +22,11 @@ def check_security(component, attribute):
         return False
 
 
-class ITab(IBrowserPage):
+class ITab(IView):
     pass
 
 
-class IComposedRenderable(Interface):
+class IComposedRenderable(IRenderable):
 
     title = TextLine(
         title=u"Title of the page",
@@ -57,16 +57,16 @@ class IComposedRenderable(Interface):
 def get_tabs(view, update=True):
     tabs = OrderedDict()
     views = sort_components(
-        getAdapters((view, view.request), Interface), key=itemgetter(1))
+        getAdapters((view, view.request), ITab), key=itemgetter(1))
+    print list(views)
     for id, tab in views:
-        if ITab.providedBy(tab):
-            # This security check is crap
-            # It's due to Grok protecting only __call__
-            # This works as long as we don't have a security proxy.
-            if check_security(tab, '__call__'):
-                if update is True:
-                    tab.update()
-                tabs[id] = tab
+        # This security check is crap
+        # It's due to Grok protecting only __call__
+        # This works as long as we don't have a security proxy.
+        if check_security(tab, '__call__'):
+            if update is True:
+                tab.update()
+            tabs[id] = tab
     return tabs
 
 
@@ -76,7 +76,8 @@ class ComposedPage(Page):
 
     tabs = {}
     updating = True
-    template = ChameleonPageTemplateFile('composed.cpt')
+    template = TALTemplate(os.path.join(
+        os.path.dirname(__file__), 'composed.cpt'))
 
     @property
     def title(self):
