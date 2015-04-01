@@ -58,7 +58,6 @@ def get_tabs(view, update=True):
     tabs = OrderedDict()
     views = sort_components(
         getAdapters((view, view.request), ITab), key=itemgetter(1))
-    print list(views)
     for id, tab in views:
         # This security check is crap
         # It's due to Grok protecting only __call__
@@ -96,8 +95,11 @@ class ComposedPage(Page):
     def details(self, id):
         tab = self.tabs.get(id)
         if tab is not None:
+            titel = title.bind(default=id).get(tab)
+            if hasattr(tab, 'title'):
+                titel = tab.title
             return {
-                'title': title.bind(default=id).get(tab),
+                'title': titel,
                 'name': id,
                 }
         return None
