@@ -6,6 +6,7 @@ import zope.security
 from collections import OrderedDict
 from cromlech.browser import IView, IRenderable
 from dolmen.field import GlobalClass
+from dolmen.forms.base.interfaces import IForm
 from dolmen.template import TALTemplate
 from grokcore.component import baseclass, title, sort_components
 from operator import itemgetter
@@ -65,6 +66,8 @@ def get_tabs(view, update=True):
         if check_security(tab, '__call__'):
             if update is True:
                 tab.update()
+                if IForm.providedBy(tab):
+                    tab.updateForm()
             tabs[id] = tab
     return tabs
 
