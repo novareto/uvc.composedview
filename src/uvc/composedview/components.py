@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import types
 import zope.security
 
 from collections import OrderedDict
@@ -55,6 +56,12 @@ class IComposedRenderable(IRenderable):
         """
 
 
+class StopperException(Exception):
+    
+    def __init__(self, stopper):
+        self.stopper = stopper
+
+
 def get_tabs(view, update=True):
     tabs = OrderedDict()
     views = sort_components(
@@ -65,9 +72,14 @@ def get_tabs(view, update=True):
         # This works as long as we don't have a security proxy.
         if check_security(tab, '__call__'):
             if update is True:
-                tab.update()
-                if IForm.providedBy(tab):
-                    tab.updateForm()
+                stopper = tab.update()
+                if stopper is None:
+                    if IForm.providedBy(tab):
+                        stopper = tab.updateForm()
+                        if stopper is not None:
+                            raise StopperException(stopper)
+                else:
+                    raise StopperException(stopper)
             tabs[id] = tab
     return tabs
 
@@ -93,7 +105,10 @@ class ComposedPage(Page):
         return None
 
     def update(self):
-        self.tabs = get_tabs(self, update=True)
+        try:
+            self.tabs = get_tabs(self, update=True)
+        except StopperException as e:
+            self.make_response = types.MethodType(e.stopper, self)
 
     def details(self, id):
         tab = self.tabs.get(id)
