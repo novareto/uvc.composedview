@@ -70,17 +70,19 @@ def get_tabs(view, update=True):
         # This security check is crap
         # It's due to Grok protecting only __call__
         # This works as long as we don't have a security proxy.
-        if check_security(tab, '__call__'):
-            if update is True:
-                stopper = tab.update()
-                if stopper is None:
-                    if IForm.providedBy(tab):
-                        stopper = tab.updateForm()
-                        if stopper is not None:
-                            raise StopperException(stopper)
-                else:
-                    raise StopperException(stopper)
-            tabs[id] = tab
+        available = getattr(tab, 'available', True)
+        if available:
+            if check_security(tab, '__call__'):
+                if update is True:
+                    stopper = tab.update()
+                    if stopper is None:
+                       if IForm.providedBy(tab):
+                            stopper = tab.updateForm()
+                            if stopper is not None:
+                                raise StopperException(stopper)
+                    else:
+                        raise StopperException(stopper)
+                tabs[id] = tab
     return tabs
 
 
@@ -92,6 +94,8 @@ class ComposedPage(Page):
     updating = True
     template = TALTemplate(os.path.join(
         os.path.dirname(__file__), 'composed.cpt'))
+
+    available = True
 
     @property
     def title(self):
@@ -130,3 +134,4 @@ class ComposedPage(Page):
         """Returns the URL of a tab.
         """
         return self.url(self, name=id)
+
