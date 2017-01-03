@@ -95,6 +95,8 @@ class ComposedPage(Page):
     template = TALTemplate(os.path.join(
         os.path.dirname(__file__), 'composed.cpt'))
 
+    available = True
+
     @property
     def title(self):
         return title.bind(default=u"").get(self)
@@ -132,3 +134,4 @@ class ComposedPage(Page):
         """Returns the URL of a tab.
         """
         return self.url(self, name=id)
+
